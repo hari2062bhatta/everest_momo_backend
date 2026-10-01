@@ -6,11 +6,7 @@ dotenv.config();
 export const userCreate = async (req, res) => {
   const { fullName, email, password, role, contact } = req.body;
 
-  if (
-    !fullName.trim() ||
-    !email.trim() ||
-    !password.trim() 
-  ) {
+  if (!fullName.trim() || !email.trim() || !password.trim()) {
     return res
       .status(400)
       .json({ success: false, message: "invalid user input " });
@@ -91,27 +87,37 @@ export const login = async (req, res) => {
         expiresIn: "1h",
       },
     );
+    const refresh_token = jwt.sign(
+      {
+        _id: isEmailExist._id,
+        role: isEmailExist.role,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "7d",
+      },
+    );
 
     res.cookie("token", token, {
       httpOnly: true,
       secure: false,
       sameSite: "lax",
     });
-
-    // const response = isEmailExist.toObject();
-    // delete response.password;
-
-    // response.token = token;
+    res.cookie("refresh_token", refresh_token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+    });
 
     return res.status(200).json({
       success: true,
       message: "login successfull",
-      data:{
-        _id:isEmailExist._id,
-        fullName:isEmailExist.fullName,
-        email:isEmailExist.email,
-        role:isEmailExist.role
-      }
+      data: {
+        _id: isEmailExist._id,
+        fullName: isEmailExist.fullName,
+        email: isEmailExist.email,
+        role: isEmailExist.role,
+      },
     });
   } catch (err) {
     return res.status(500).json({
@@ -121,58 +127,95 @@ export const login = async (req, res) => {
   }
 };
 
-export const logout = async (req,res) => {
+export const logout = async (req, res) => {
   try {
     res.clearCookie("token");
+    res.clearCookie("refresh_token")
     res.json({
       message: "Logout successful",
     });
+    
   } catch (err) {
-    res.status(500).json({success:false,message:err.message})
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
-export const profile=async(req,res)=>{
-          const id =req.user._id
+export const profile = async (req, res) => {
+  const id = req.user._id;
 
-          try{
-            const user =await User.findById(id).select("-password")
-            res.status(200).json({success:true,data:user})
-
-          }
-          catch(err){
-             return res.status(500).json({
-                success: false,
-                message: err.message,
-              });
-          }
-
-}
-
-export const deleteUser=async(req,res)=>{
-  const {id}=req.params;
-
-  try{
-    const response=await User.findByIdAndDelete(id)
-    res.status(200).json({success:true,message:"user deleted successfully"})
-
+  try {
+    const user = await User.findById(id).select("-password");
+    res.status(200).json({ success: true, data: user });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
   }
-  catch(err){
-    res.status(500).json({success:true,message:err.message})
+};
+
+export const deleteUser = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const response = await User.findByIdAndDelete(id);
+    res
+      .status(200)
+      .json({ success: true, message: "user deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ success: true, message: err.message });
+  }
+};
+
+export const updateUser = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const response = await User.findByIdAndUpdate(id, req.body);
+    res
+      .status(200)
+      .json({ success: true, message: "user update successfully" });
+  } catch (err) {
+    res.status(500).json({ success: true, message: err.message });
+  }
+};
+
+export const refreshToken = async (req, res) => {
+  const refresh_token = req.cookies.refresh_token;
+
+  if (!refresh_token) {
+    return res.status(401).json({
+      success: false,
+      message: "Please login first",
+    });
   }
 
-}
+  try {
+    const decoded = jwt.verify(
+      refresh_token,
+      process.env.JWT_SECRET
+    );
 
-export const updateUser=async(req,res)=>{
-const {id}=req.params;
-  try{
+    const accessToken = jwt.sign(
+      { _id: decoded._id, role: decoded.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
 
-    const response=await User.findByIdAndUpdate(id,req.body)
-    res.status(200).json({success:true,message:"user update successfully"})
+    res.cookie("token", accessToken, {
+      httpOnly: true,
+      secure:false,
+      sameSite: "lax",
+      maxAge: 60 * 60 * 1000,
+    });
 
+    return res.status(200).json({
+      success: true,
+      message: "Token refreshed successfully",
+    });
+  } catch (err) {
+    return res.status(401).json({
+      success: false,
+      message: "Refresh token expired. Please login again.",
+    });
   }
-  catch(err){
-    res.status(500).json({success:true,message:err.message})
-
-  }
-}
+};

@@ -8,7 +8,8 @@ import {
   logout,
   profile,
   deleteUser,
-  updateUser
+  updateUser,
+  refreshToken
 } from "../controller/userController.js";
 const userRouter = express.Router();
 
@@ -19,4 +20,5 @@ userRouter.get("/logout", logout);
 userRouter.get("/profile",authMiddleware, profile);
 userRouter.delete("/deleteuser/:id",authMiddleware,isAdmin,deleteUser)
 userRouter.put("/updateuser/:id",authMiddleware,isAdmin,updateUser)
+userRouter.post("/refreshtoken",refreshToken)
 export default userRouter;
