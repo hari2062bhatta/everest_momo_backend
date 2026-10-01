@@ -148,3 +148,31 @@ export const profile=async(req,res)=>{
           }
 
 }
+
+export const deleteUser=async(req,res)=>{
+  const {id}=req.params;
+
+  try{
+    const response=await User.findByIdAndDelete(id)
+    res.status(200).json({success:true,message:"user deleted successfully"})
+
+  }
+  catch(err){
+    res.status(500).json({success:true,message:err.message})
+  }
+
+}
+
+export const updateUser=async(req,res)=>{
+const {id}=req.params;
+  try{
+
+    const response=await User.findByIdAndUpdate(id,req.body)
+    res.status(200).json({success:true,message:"user update successfully"})
+
+  }
+  catch(err){
+    res.status(500).json({success:true,message:err.message})
+
+  }
+}
