@@ -2,6 +2,7 @@ import User from "../models/userModels.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv";
+import transporter from "../services/nodemailer.js"
 dotenv.config();
 export const userCreate = async (req, res) => {
   const { fullName, email, password, role, contact } = req.body;
@@ -219,3 +220,24 @@ export const refreshToken = async (req, res) => {
     });
   }
 };
+
+
+export const forgotPassword=async(req,res)=>{
+  const {email}=req.body;
+  try{
+    const user=await User.findOne({email})
+    if(!user){
+      return res.status(404).json({success:false,messasge:"user doesnot exist "})
+    }
+        const info = await transporter.sendMail({
+          from: process.env.EMAIL_USER,
+          to: "bhattaharry0000@gmail.com",
+          subject: "Test Email",
+          text: "Hello from Nodemailer <a>click on this link </a>",
+        });
+
+  }
+  catch(err){
+
+  }
+}
