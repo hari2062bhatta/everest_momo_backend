@@ -10,7 +10,8 @@ import {
   deleteUser,
   updateUser,
   refreshToken,
-  forgotPassword
+  forgotPassword,
+  resetPassword
 } from "../controller/userController.js";
 const userRouter = express.Router();
 
@@ -24,4 +25,5 @@ userRouter.put("/updateuser/:id",authMiddleware,isAdmin,updateUser)
 // userRouter.put("/updateuser/:id",updateUser)
 userRouter.post("/refreshtoken",refreshToken)
 userRouter.post("/forgotpassword",forgotPassword)
+userRouter.put("/resetpassword",resetPassword)
 export default userRouter;
